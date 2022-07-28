@@ -1,35 +1,35 @@
 import Player from '@vimeo/player';
+import throttle from 'lodash.throttle';
+// var throttle = require('lodash.throttle');
 
 const iframe = document.querySelector('iframe');
 const player = new Player(iframe);
+const LOCALSTORAGE_KEY_VIDEO = 'videoplayer-current-time';
 
-// console.log(player);
+const save = (key, value) => {
+  try {
+    const serializedState = JSON.stringify(value);
+    localStorage.setItem(key, serializedState);
+  } catch (error) {
+    console.error('Set state error: ', error.message);
+  }
+};
 
-let playerLocalStorage = {};
+const load = key => {
+  try {
+    const serializedState = localStorage.getItem(key);
+    return serializedState === null ? undefined : JSON.parse(serializedState);
+  } catch (error) {
+    console.error('Get state error: ', error.message);
+  }
+};
 
-player.on('play', function () {
-    console.log(timeupdate);
-    console.log('played the video!');
+player.on(
+  'timeupdate',
+  throttle(function (evt) {
+    const currentTime = evt.seconds;
+    save(LOCALSTORAGE_KEY_VIDEO, currentTime);
+  }, 1000)
+);
 
-        const currentTime = timeupdate.seconds;
-    console.log(currentTime);
-
-    localStorage.setItem("videoplayer-current-time", "What the fack");
-    const vcT = localStorage.getItem("videoplayer-current-time");
-
-    console.log(vcT);
-    // localStorage.removeItem("videoplayer-current-time");
-});
-
-
-
-
-
-
-
-
-
-
-player.getVideoTitle().then(function(title) {
-    console.log('title:', title);
-});
+player.setCurrentTime(load(LOCALSTORAGE_KEY_VIDEO));
