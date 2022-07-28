@@ -1,5 +1,6 @@
 import throttle from 'lodash.throttle';
 
+const LOCALSTORAGE_FORM_STATE = 'feedback-form-state';
 const save = (key, value) => {
   try {
     const serializedState = JSON.stringify(value);
@@ -18,24 +19,44 @@ const load = key => {
   }
 };
 
-
 const form = document.querySelector('.feedback-form');
-form.addEventListener('input', handleSaveLocalStorageInput);
+const {
+  elements: { email, message },
+} = form;
+
+CheckValueLocalStorage();
+
+form.addEventListener('input', throttle(handleSaveLocalStorageInput), 500);
+form.addEventListener('submit', handleOutputDataSubmit);
 
 // ===============================
 // FUNCTION
 
-// evt.preventDefault();
+function CheckValueLocalStorage() {
+  if (localStorage.getItem(LOCALSTORAGE_FORM_STATE) === null) {
+    email.value = '';
+    message.value = '';
+  } else {
+    const formData = load(LOCALSTORAGE_FORM_STATE);
+    email.value = formData.email;
+    message.value = formData.message;
+  }
+}
 
-function handleSaveLocalStorageInput(evt) {
-  const {
-    elements: { email, message },
-  } = evt.currentTarget;
-    
-    const formData = {};
+function handleSaveLocalStorageInput() {
+  const formDataSave = {};
+  formDataSave.email = email.value;
+  formDataSave.message = message.value;
 
-    formData.email = email.value;
-    formData.message = message.value;
+  save(LOCALSTORAGE_FORM_STATE, formDataSave);
+}
 
+function handleOutputDataSubmit(event) {
+  event.preventDefault();
 
+  const outputDataServer = load(LOCALSTORAGE_FORM_STATE);
+  console.log(outputDataServer);
+
+  localStorage.removeItem(LOCALSTORAGE_FORM_STATE);
+  event.currentTarget.reset();
 }
